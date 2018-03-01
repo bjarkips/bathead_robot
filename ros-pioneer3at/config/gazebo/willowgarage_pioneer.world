@@ -1,0 +1,622 @@
+<sdf version='1.6'>
+  <world name='default'>
+    <light name='sun' type='directional'>
+      <cast_shadows>1</cast_shadows>
+      <pose frame=''>0 0 10 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.5 -1</direction>
+    </light>
+    <model name='ground_plane'>
+      <static>1</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>50</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+    </model>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <physics name='default_physics' default='0' type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    
+    
+    
+    <model name='pioneer3at'>
+      <pose frame=''>-0.021139 -0.018724 0.18 0 -0 1.57</pose>
+      <static>0</static>
+      <link name='chassis'>
+        <inertial>
+          <mass>14</mass>
+          <inertia>
+            <ixx>0.147117</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.334951</iyy>
+            <iyz>0</iyz>
+            <izz>0.397834</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.501 0.3 0.19</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://pioneer3at/meshes/chassis.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='right_front_wheel'>
+        <pose frame=''>0.125 -0.201 -0.06 1.5707 -0 0</pose>
+        <inertial>
+          <mass>1.5</mass>
+          <inertia>
+            <ixx>0.00524062</ixx>
+            <iyy>0.00524062</iyy>
+            <izz>0.009075</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.11</radius>
+              <length>0.075</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1</mu>
+                <mu2>1</mu2>
+                <slip1>0.5</slip1>
+                <slip2>0</slip2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://pioneer3at/meshes/wheel.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='left_front_wheel'>
+        <pose frame=''>0.125 0.201 -0.06 1.5707 -0 0</pose>
+        <inertial>
+          <mass>1.5</mass>
+          <inertia>
+            <ixx>0.00524062</ixx>
+            <iyy>0.00524062</iyy>
+            <izz>0.009075</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.11</radius>
+              <length>0.075</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1</mu>
+                <mu2>1</mu2>
+                <slip1>0.5</slip1>
+                <slip2>0</slip2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://pioneer3at/meshes/wheel.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='right_rear_wheel'>
+        <pose frame=''>-0.125 -0.201 -0.06 1.5707 -0 0</pose>
+        <inertial>
+          <mass>1.5</mass>
+          <inertia>
+            <ixx>0.00524062</ixx>
+            <iyy>0.00524062</iyy>
+            <izz>0.009075</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.11</radius>
+              <length>0.075</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1</mu>
+                <mu2>1</mu2>
+                <slip1>0.5</slip1>
+                <slip2>0</slip2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://pioneer3at/meshes/wheel.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='left_rear_wheel'>
+        <pose frame=''>-0.125 0.201 -0.06 1.5707 -0 0</pose>
+        <inertial>
+          <mass>1.5</mass>
+          <inertia>
+            <ixx>0.00524062</ixx>
+            <iyy>0.00524062</iyy>
+            <izz>0.009075</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.11</radius>
+              <length>0.075</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1</mu>
+                <mu2>1</mu2>
+                <slip1>0.5</slip1>
+                <slip2>0</slip2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://pioneer3at/meshes/wheel.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='right_front' type='revolute'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <child>right_front_wheel</child>
+        <parent>chassis</parent>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='right_rear' type='revolute'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <child>right_rear_wheel</child>
+        <parent>chassis</parent>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='left_front' type='revolute'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <child>left_front_wheel</child>
+        <parent>chassis</parent>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='left_rear' type='revolute'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <child>left_rear_wheel</child>
+        <parent>chassis</parent>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <!--plugin name='SkidSteerDrivePlugin' filename='libSkidSteerDrivePlugin.so'>
+        <right_front>right_front</right_front>
+        <right_rear>right_rear</right_rear>
+        <left_front>left_front</left_front>
+        <left_rear>left_rear</left_rear>
+        <MaxForce>5.0</MaxForce>
+      </plugin-->
+      <plugin name='SkidSteerDrivePlugin' filename='libSkidSteerDrivePlugin.so'/>
+      <link name='sonar_link'>
+        <inertial>
+          <pose frame=''>-0.01 -0.012 0.33 0 -0 0</pose>
+          <mass>0.39</mass>
+          <inertia>
+            <ixx>0</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0</iyy>
+            <iyz>0</iyz>
+            <izz>0</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1</mu>
+                <mu2>1</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <contact>
+              <ode>
+                <kp>1e+07</kp>
+                <kd>1</kd>
+                <min_depth>0.001</min_depth>
+                <max_vel>0.1</max_vel>
+              </ode>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+        </visual>
+        <sensor name='sonar_sensor_left' type='sonar'>
+          <pose frame=''>0 0 0.2 -2.89159 -1.47159 3.14159</pose>
+          <sonar>
+            <min>0</min>
+            <max>2</max>
+            <radius>0.3</radius>
+          </sonar>
+          <always_on>1</always_on>
+          <update_rate>30</update_rate>
+          <visualize>1</visualize>
+        </sensor>
+        <sensor name='sonar_sensor_right' type='sonar'>
+          <pose frame=''>0 0 0.2 2.89159 -1.47159 -3.14159</pose>
+          <sonar>
+            <min>0</min>
+            <max>2</max>
+            <radius>0.3</radius>
+          </sonar>
+          <always_on>1</always_on>
+          <update_rate>30</update_rate>
+          <visualize>1</visualize>
+        </sensor>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='sonar_joint' type='revolute'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <child>sonar_link</child>
+        <parent>chassis</parent>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+    </model>
+    <model name='willowgarage'>
+      <static>1</static>
+      <pose frame=''>-11.1585 2.28717 0 0 -0 0</pose>
+      <link name='walls'>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://willowgarage/meshes/willowgarage_collision.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://willowgarage/meshes/willowgarage_visual.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <cast_shadows>0</cast_shadows>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+    </model>
+    <state world_name='default'>
+      <sim_time>43 478000000</sim_time>
+      <real_time>44 101974818</real_time>
+      <wall_time>1512661477 557317843</wall_time>
+      <iterations>43478</iterations>
+      <model name='ground_plane'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='pioneer3at'>
+        <pose frame=''>-0.00218 -0.01878 0.170003 1e-06 3e-06 1.56344</pose>
+        <scale>1 1 1</scale>
+        <link name='chassis'>
+          <pose frame=''>-0.00218 -0.01878 0.170003 1e-06 3e-06 1.56344</pose>
+          <velocity>0.000542 7.3e-05 0.000135 -0.007237 -8.6e-05 -0.000153</velocity>
+          <acceleration>-0.005388 0.188401 -0.014494 -1.06295 -0.42075 0.218528</acceleration>
+          <wrench>-0.075439 2.63762 -0.20292 0 -0 0</wrench>
+        </link>
+        <link name='left_front_wheel'>
+          <pose frame=''>-0.202256 0.107695 0.110002 1.57072 0.156617 1.56344</pose>
+          <velocity>0.000699 -0.00034 -0.000754 -0.005104 -0.003799 -7.5e-05</velocity>
+          <acceleration>0.244529 -0.877161 -2.07296 -0.057234 -1.5071 0.65491</acceleration>
+          <wrench>0.366793 -1.31574 -3.10945 0 -0 0</wrench>
+        </link>
+        <link name='left_rear_wheel'>
+          <pose frame=''>-0.204094 -0.142299 0.110003 1.57072 -0.129042 1.56344</pose>
+          <velocity>0.000397 -0.00034 0.000959 0.003082 0.003469 -5.7e-05</velocity>
+          <acceleration>-0.233116 -0.879865 1.91474 -0.203825 0.723205 0.71275</acceleration>
+          <wrench>-0.349675 -1.3198 2.87211 0 -0 0</wrench>
+        </link>
+        <link name='right_front_wheel'>
+          <pose frame=''>0.199734 0.104739 0.110002 1.57072 0.112535 1.56344</pose>
+          <velocity>0.00068 -0.000388 -0.000785 -0.003568 -0.003999 -0.000219</velocity>
+          <acceleration>0.208165 -0.763478 -2.13742 3.08157 -1.25459 -2.99362</acceleration>
+          <wrench>0.312247 -1.14522 -3.20613 0 -0 0</wrench>
+        </link>
+        <link name='right_rear_wheel'>
+          <pose frame=''>0.197895 -0.145255 0.110003 1.57072 -0.131218 1.56344</pose>
+          <velocity>0.000414 -0.000385 0.001116 0.003426 0.003648 -0.000204</velocity>
+          <acceleration>-0.196995 -0.757404 2.22771 -0.068005 1.08442 0.203361</acceleration>
+          <wrench>-0.295492 -1.13611 3.34157 0 -0 0</wrench>
+        </link>
+        <link name='sonar_link'>
+          <pose frame=''>-0.002179 -0.01878 0.170003 1e-06 3e-06 1.56995</pose>
+          <velocity>0.000542 7.3e-05 0.000135 -0.007235 -8.8e-05 -1.2e-05</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>-0.022925 2.22492 0.060366 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='willowgarage'>
+        <pose frame=''>-11.1585 2.28717 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='walls'>
+          <pose frame=''>-11.1585 2.28717 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <light name='sun'>
+        <pose frame=''>0 0 10 0 -0 0</pose>
+      </light>
+    </state>
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose frame=''>0.073766 -5.32867 8.35851 -0 0.939643 1.45619</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+  </world>
+</sdf>

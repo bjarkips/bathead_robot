@@ -1,0 +1,26 @@
+<launch>
+  
+  <!-- Note: This launch file is not set up for 2D mapping!
+             I am using the SICK lms for mapping, and this hokuyo for
+             making a 3D point cloud by pointing it upwards yeilding a 
+             3D pointcloud of the enviornment.
+             
+             To use this for mapping, you will need ot change the static
+             transform below to match your mounting postition and change
+             /Hokuyo/most_intense to /Pioneer3AT/laserscan  -->
+
+
+	<node pkg="urg_node" type="urg_node" name="Hokuyo" >
+
+	  <rosparam file="$(find pioneer3at)/config/hokuyo.yaml" command="load" />
+	  
+		<remap from="/echoes"       to="~echoes" />
+		<remap from="/first"        to="~first" />
+		<remap from="/last"         to="~last" />
+		<remap from="/most_intense" to="~most_intense" />
+	</node>
+	
+	<!-- publish static transform from the center of the robot to the lms -->
+	<node pkg="tf" type="static_transform_publisher" name="tf_Hokuyo" 
+	      args="0.27 0 0.17 3.14 -1.57 0 Pioneer3AT/base_link hokuyo 100" />
+</launch>
