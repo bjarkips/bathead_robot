@@ -69,45 +69,6 @@
       <background>0.700000 0.700000 0.700000 1.000000</background>
       <shadows>1</shadows>
     </scene>
-    <model name='willowgarage'>
-      <static>1</static>
-      <pose>-20.000000 -20.000000 0.000000 0.000000 0.000000 0.000000</pose>
-      <link name='walls'>
-        <collision name='collision'>
-          <geometry>
-            <mesh>
-              <uri>model://willowgarage/meshes/willowgarage_collision.dae</uri>
-            </mesh>
-          </geometry>
-          <surface>
-            <bounce/>
-            <friction>
-              <ode/>
-            </friction>
-            <contact>
-              <ode/>
-            </contact>
-          </surface>
-        </collision>
-        <visual name='visual'>
-          <geometry>
-            <mesh>
-              <uri>model://willowgarage/meshes/willowgarage_visual.dae</uri>
-            </mesh>
-          </geometry>
-          <cast_shadows>0</cast_shadows>
-        </visual>
-        <velocity_decay>
-          <linear>0.000000</linear>
-          <angular>0.000000</angular>
-        </velocity_decay>
-        <self_collide>0</self_collide>
-        <kinematic>0</kinematic>
-        <gravity>1</gravity>
-      </link>
-    </model>
-    
-    
     <model name='Pioneer3AT'>
       <pose>-6 -22 0.18 0 0 -1.785000</pose>
       <static>0</static>

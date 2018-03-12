@@ -11,6 +11,9 @@ class bathead_control_node
 {
 public:
 	bathead_control_node(ros::NodeHandle);
+	double goalX();
+	double goalY();
+	double range();
 	virtual ~bathead_control_node();
     void run();
 private:
@@ -49,11 +52,21 @@ private:
     	max_ang_vel = 1.5, max_lin_vel = .5;
 	nav_msgs::Odometry odom;
 	//vec goal = {7.64, -9.07}; // Goal in next room
-	vec goal = {27.5, -17.5}; // Goal in top right corner
+	//vec goal = {27.5, -17.5}; // Goal in top right corner
 	//vec goal = {-2.5, -10.5}; // Goal in side room
 	//vec goal = {-6.0, -4.0}; // Goal in same room
 	//vec goal = {38.0, 11.5}; // Goal outside, top left
+	// Goals in cafe_world
+	//vec goal = {3.0, -9.0}; // Goal in bottom right
+	//vec goal = {-2.0, -9.0}; // Goal in bottom left
+	//vec goal = {-2.0, 4.0}; // Goal in countertop area
+	//vec goal = {4.0, 8.0}; // Goal in top right
+	//vec goal = {0.0, 9.0}; // Goal in kitchen
 	// -17, -16: Outside, bottom right
+	// Goals in box_world
+	//vec goal = {3.5, 4.5}; // Goal in top right
+	//vec goal = {-7, 4.5}; // Goal in top left
+	vec goal = {-7.5, .5}; // Goal in left corner
 	std::clock_t t_obstacle = std::clock();
 	//int chirp_trigger_pin = 7;
 	
@@ -128,10 +141,22 @@ void bathead_control_node::poseSubscriberCallback(const nav_msgs::Odometry::Cons
 	odom = *msg;
 }
 
+double bathead_control_node::goalX() {
+	return goal.x;
+}
+
+double bathead_control_node::goalY() {
+	return goal.y;
+}
+
+double bathead_control_node::range() {
+	return range_max;
+}
+
 void bathead_control_node::run()
 {
 	if ( range_left < 0.01 || range_right < 0.01 ) {
-		ROS_INFO("Waiting for sensor readings.");
+		//ROS_INFO("Waiting for sensor readings.");
 	}
 	else {
 		
@@ -170,12 +195,10 @@ void bathead_control_node::run()
 
 	double L = range_left, R = range_right, G = -angle_diff_norm, Tw = .85;
 
-	ROS_INFO("L = %f R = %f G = %f", L, R, G);
-
 /// Enter three-state machine
 	switch ( control_state ) {
 		case Control::seek_goal: 
-			ROS_INFO("Seeking goal. Int_L = %f Int_R = %f", integral_left, integral_right);
+			//ROS_INFO("Seeking goal. Int_L = %f Int_R = %f", integral_left, integral_right);
 			if ( .95 <= L && .95 <= R ) { 
 				// Case #1: No obstacle, turn towards goal at maximum forward speed
 				vel.angular.z = max_ang_vel * -angle_diff_norm * (1.0 - integral_avg); // TODO check
@@ -204,7 +227,7 @@ void bathead_control_node::run()
 			}
 	
 		case Control::follow_left:
-			ROS_INFO("Following left. Int_L = %f Int_R = %f", integral_left, integral_right);
+			//ROS_INFO("Following left. Int_L = %f Int_R = %f", integral_left, integral_right);
 			if ( (Tw <= L && L < .95) && .95 <= R && G < 0.0 ) {
 				// Case #1: Wall visible on left side, goal on left side, drive straight
 				vel.angular.z = 0.0;
@@ -226,7 +249,7 @@ void bathead_control_node::run()
 			if ( .95 <= L && G < 0.0 ) {
 				// Case #4: No wall on left side, turn left
 				// TODO check that this properly avoids obstacles on the right
-				vel.angular.z = -.9*max_ang_vel * (1.1 - integral_avg);
+				vel.angular.z = -.9*max_ang_vel * (1.1 - std::sqrt(std::sqrt(integral_avg)));
 				vel.linear.x = max_lin_vel;
 				break;
 			}
@@ -254,7 +277,7 @@ void bathead_control_node::run()
 			break;
 	
 		case Control::follow_right:
-			ROS_INFO("Following right. Int_L = %f Int_R = %f", integral_left, integral_right);
+			//ROS_INFO("Following right. Int_L = %f Int_R = %f", integral_left, integral_right);
 			if ( .95 <= L && (Tw <= R && R < .95) && 0.0 <= G ) {
 				// Case #1: Wall visible on right side, goal on right side, drive straight
 				vel.angular.z = 0.0;
@@ -275,7 +298,7 @@ void bathead_control_node::run()
 			}
 			if ( .95 <= R && 0.0 <= G ) {
 				// Case #4: No wall on right side, turn right
-				vel.angular.z = .9*max_ang_vel * (1.1 - integral_avg);
+				vel.angular.z = .9*max_ang_vel * (1.1 - std::sqrt(std::sqrt(integral_avg)));
 				vel.linear.x = max_lin_vel;
 				break;
 			}
@@ -321,52 +344,14 @@ void bathead_control_node::run()
 	vel.angular.x = 0.0;
 	vel.angular.y = 0.0;
 	cmd_vel_publisher.publish(vel);
+
+	ROS_INFO("%d %f %f %f %f %f %f %f %f %f",
+				control_state, L, R, G,
+				odom.pose.pose.position.x, odom.pose.pose.position.y,
+				a_robot, a_robot_goal,
+				vel.angular.z, vel.linear.x);
 	
 	} // else
-	/**
-	
-/// Turn according to difference between ranges
-
-	double range_diff = range_right - range_left;
-	double integral_diff = integral_right - integral_left;
-	
-	// Normalize difference 
-	double range_diff_norm = range_diff / range_max;
-	double integral_diff_norm = integral_diff * integral_weight / range_max;
-	
-	// Clamp integral difference
-	// If integral is maxed out, encourage turning by resetting opposite integral
-	if (integral_diff_norm > 1.0 ) {
-		integral_diff_norm = 1.0;
-		integral_left = 0.0;	// TODO check
-	}
-	if (integral_diff_norm < -1.0 ) {
-		integral_diff_norm = -1.0;
-		integral_right = 0.0;
-	}
-	
-	
-	// Calculate angular velocity (rad/s) from difference
-	double ang_vel = (range_diff_norm - integral_diff_norm) * max_ang_vel / 2.0;
-	
-	// Influence turning only when avoiding an obstacle
-	if ( fabs(ang_vel) > .01 ) {
-		
-		vel.angular.z = -ang_vel;
-		
-		// Speed up turning if obstacle is detected
-		vel.angular.z *= (fabs(integral_diff_norm) + fabs(range_diff_norm) / 2.0); // TODO tune
-	}
-	
-	//if () t_obstacle = std::clock(); // TODO Reset obstacle timer when obstacle is found
-	
-	ROS_INFO("t_obstacle: %f\nintegral_diff_norm: %f\nrange_diff_norm: %f",
-				(std::clock() - t_obstacle) * 100.0 / ((double) CLOCKS_PER_SEC),
-				integral_diff_norm,
-				range_diff_norm);
-
-	
-	**/
 }
 
 bathead_control_node::~bathead_control_node( ) {}
@@ -381,6 +366,8 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
 	bathead_control_node bcn(nh);
 	ros::Rate rate(20);
+	ROS_INFO("bathead_robot_goal_x: %f bathead_robot_goal_y: %f bathead_robot_range: %f", bcn.goalX(), bcn.goalY(), bcn.range());
+	ROS_INFO("bathead_robot_ctrl bathead_robot_range_L bathead_robot_range_R bathead_robot_angle_G bathead_robot_pos_x bathead_robot_pos_y bathead_robot_yaw bathead_robot_ang_togoal bathead_robot_vel_ang_z bathead_robot_vel_lin_x");
 	while(ros::ok())
 	{
 		bcn.run();
