@@ -4,6 +4,9 @@ project(bathead_drone)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
+add_compile_options(-std=c++11)
+
 find_package(catkin REQUIRED COMPONENTS
   bathead_robot
 )
@@ -126,16 +129,16 @@ include_directories(
 # add_dependencies(bathead_drone ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(bathead_drone_node src/bathead_drone_node.cpp)
+add_executable(uav_control_node src/uav_control_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(bathead_drone_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(uav_control_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(bathead_drone_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(uav_control_node
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

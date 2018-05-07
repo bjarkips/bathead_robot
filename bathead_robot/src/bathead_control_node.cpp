@@ -11,8 +11,8 @@ class bathead_control_node
 {
 public:
 	bathead_control_node(ros::NodeHandle);
-	double goalX();
-	double goalY();
+	//double goalX();
+	//double goalY();
 	double range();
 	virtual ~bathead_control_node();
     void run();
@@ -34,8 +34,8 @@ private:
 	void rangeLeftSubscriberCallback(const std_msgs::Float64::ConstPtr& msg);
     ros::Subscriber range_right_subscriber;
     void rangeRightSubscriberCallback(const std_msgs::Float64::ConstPtr& msg);
-    ros::Subscriber pose_subscriber;
-    void poseSubscriberCallback(const nav_msgs::Odometry::ConstPtr& msg);
+    //ros::Subscriber pose_subscriber;
+    //void poseSubscriberCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
 	ros::Publisher cmd_vel_publisher;
 
@@ -47,10 +47,10 @@ private:
 	int sign(double x);
 
 	// Attributes
-    double range_left, range_right, range_max = 1.5,
+    double range_left, range_right, range_max = 1.0,
     	integral_left = 0.0, integral_right = 0.0, integral_weight = .2, // TODO check
-    	max_ang_vel = 1.5, max_lin_vel = .5;
-	nav_msgs::Odometry odom;
+    	max_ang_vel = .5, max_lin_vel = .2;
+	//nav_msgs::Odometry odom;
 	//vec goal = {7.64, -9.07}; // Goal in next room
 	//vec goal = {27.5, -17.5}; // Goal in top right corner
 	//vec goal = {-2.5, -10.5}; // Goal in side room
@@ -66,7 +66,7 @@ private:
 	// Goals in box_world
 	//vec goal = {3.5, 4.5}; // Goal in top right
 	//vec goal = {-7, 4.5}; // Goal in top left
-	vec goal = {-7.5, .5}; // Goal in left corner
+	//vec goal = {-7.5, .5}; // Goal in left corner
 	std::clock_t t_obstacle = std::clock();
 	//int chirp_trigger_pin = 7;
 	
@@ -114,9 +114,9 @@ bathead_control_node::bathead_control_node(ros::NodeHandle n)
 
     range_left_subscriber = nh.subscribe<std_msgs::Float64>("/bathead/range/left", 1, &bathead_control_node::rangeLeftSubscriberCallback, this);
     range_right_subscriber = nh.subscribe<std_msgs::Float64>("/bathead/range/right", 1, &bathead_control_node::rangeRightSubscriberCallback, this);
-    pose_subscriber = nh.subscribe<nav_msgs::Odometry>("/Pioneer3AT/odom", 1, &bathead_control_node::poseSubscriberCallback, this);
+    //pose_subscriber = nh.subscribe<nav_msgs::Odometry>("/Pioneer3AT/odom", 1, &bathead_control_node::poseSubscriberCallback, this);
 
-    cmd_vel_publisher = nh.advertise<geometry_msgs::Twist>("/Pioneer3AT/cmd_vel",1);
+    cmd_vel_publisher = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel",1);
 	    
 }
 
@@ -136,18 +136,18 @@ void bathead_control_node::rangeRightSubscriberCallback(const std_msgs::Float64:
 	range_right = (msg->data) / range_max;
 }
 
-void bathead_control_node::poseSubscriberCallback(const nav_msgs::Odometry::ConstPtr& msg)
-{
-	odom = *msg;
-}
+//void bathead_control_node::poseSubscriberCallback(const nav_msgs::Odometry::ConstPtr& msg)
+//{
+//	odom = *msg;
+//}
 
-double bathead_control_node::goalX() {
-	return goal.x;
-}
+//double bathead_control_node::goalX() {
+//	return goal.x;
+//}
 
-double bathead_control_node::goalY() {
-	return goal.y;
-}
+//double bathead_control_node::goalY() {
+//	return goal.y;
+//}
 
 double bathead_control_node::range() {
 	return range_max;
@@ -167,11 +167,11 @@ void bathead_control_node::run()
 /// Integrate difference between max and current values to avoid walls and especially corners
 
 	//if (range_left == 1.0) integral_left -= 10 * integral_weight;
-	integral_left += (.95 - range_left) * integral_weight;
+	integral_left += (.8 - range_left) * integral_weight;
 	if (integral_left < 0.0) integral_left = 0.0;
 
 	//if (range_right == 1.0) integral_right -= 10 * integral_weight;
-	integral_right += (.95 - range_right) * integral_weight;
+	integral_right += (.8 - range_right) * integral_weight;
 	if (integral_right < 0.0) integral_right = 0.0;
 
 	// Clamp integrals
@@ -185,23 +185,24 @@ void bathead_control_node::run()
 
 /// Use robot odometry and goal point to encourage turning
 
-	vec v_robot_goal = {goal.x - odom.pose.pose.position.x, goal.y - odom.pose.pose.position.y};
-	double roll, pitch, yaw;
-	toEulerAngle(odom.pose.pose.orientation.w, odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, roll, pitch, yaw);
-	double a_robot = yaw;
-	double a_robot_goal = atan2( v_robot_goal.y, v_robot_goal.x );
-	double angle_diff = angleDiff(a_robot, a_robot_goal);
-	double angle_diff_norm = angle_diff / (M_PI / 2);
+	//vec v_robot_goal = {goal.x - odom.pose.pose.position.x, goal.y - odom.pose.pose.position.y};
+	//double roll, pitch, yaw;
+	//toEulerAngle(odom.pose.pose.orientation.w, odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, roll, pitch, yaw);
+	//double a_robot = yaw;
+	//double a_robot_goal = atan2( v_robot_goal.y, v_robot_goal.x );
+	//double angle_diff = angleDiff(a_robot, a_robot_goal);
+	//double angle_diff_norm = angle_diff / (M_PI / 2);
 
-	double L = range_left, R = range_right, G = -angle_diff_norm, Tw = .85;
+	double L = range_left, R = range_right, G = -0.1, Tw = .85;
 
 /// Enter three-state machine
 	switch ( control_state ) {
 		case Control::seek_goal: 
-			//ROS_INFO("Seeking goal. Int_L = %f Int_R = %f", integral_left, integral_right);
+			ROS_INFO("Seeking goal. Int_L = %f Int_R = %f", integral_left, integral_right);
 			if ( .95 <= L && .95 <= R ) { 
 				// Case #1: No obstacle, turn towards goal at maximum forward speed
-				vel.angular.z = max_ang_vel * -angle_diff_norm * (1.0 - integral_avg); // TODO check
+				//vel.angular.z = max_ang_vel * -angle_diff_norm * (1.0 - integral_avg); // TODO check
+				vel.angular.z = 0.0;
 				vel.linear.x = max_lin_vel;
 				break;
 			}
@@ -227,7 +228,7 @@ void bathead_control_node::run()
 			}
 	
 		case Control::follow_left:
-			//ROS_INFO("Following left. Int_L = %f Int_R = %f", integral_left, integral_right);
+			ROS_INFO("Following left. Int_L = %f Int_R = %f", integral_left, integral_right);
 			if ( (Tw <= L && L < .95) && .95 <= R && G < 0.0 ) {
 				// Case #1: Wall visible on left side, goal on left side, drive straight
 				vel.angular.z = 0.0;
@@ -277,7 +278,7 @@ void bathead_control_node::run()
 			break;
 	
 		case Control::follow_right:
-			//ROS_INFO("Following right. Int_L = %f Int_R = %f", integral_left, integral_right);
+			ROS_INFO("Following right. Int_L = %f Int_R = %f", integral_left, integral_right);
 			if ( .95 <= L && (Tw <= R && R < .95) && 0.0 <= G ) {
 				// Case #1: Wall visible on right side, goal on right side, drive straight
 				vel.angular.z = 0.0;
@@ -345,10 +346,8 @@ void bathead_control_node::run()
 	vel.angular.y = 0.0;
 	cmd_vel_publisher.publish(vel);
 
-	ROS_INFO("%d %f %f %f %f %f %f %f %f %f",
-				control_state, L, R, G,
-				odom.pose.pose.position.x, odom.pose.pose.position.y,
-				a_robot, a_robot_goal,
+	ROS_INFO("%d %f %f %f %f",
+				control_state, L, R,
 				vel.angular.z, vel.linear.x);
 	
 	} // else
@@ -365,9 +364,9 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "bathead_control_node");
 	ros::NodeHandle nh;
 	bathead_control_node bcn(nh);
-	ros::Rate rate(20);
-	ROS_INFO("bathead_robot_goal_x: %f bathead_robot_goal_y: %f bathead_robot_range: %f", bcn.goalX(), bcn.goalY(), bcn.range());
-	ROS_INFO("bathead_robot_ctrl bathead_robot_range_L bathead_robot_range_R bathead_robot_angle_G bathead_robot_pos_x bathead_robot_pos_y bathead_robot_yaw bathead_robot_ang_togoal bathead_robot_vel_ang_z bathead_robot_vel_lin_x");
+	ros::Rate rate(3);
+	//ROS_INFO("bathead_robot_goal_x: %f bathead_robot_goal_y: %f bathead_robot_range: %f", bcn.goalX(), bcn.goalY(), bcn.range());
+	ROS_INFO("bathead_robot_ctrl bathead_robot_range_L bathead_robot_range_R bathead_robot_vel_ang_z bathead_robot_vel_lin_x");
 	while(ros::ok())
 	{
 		bcn.run();
