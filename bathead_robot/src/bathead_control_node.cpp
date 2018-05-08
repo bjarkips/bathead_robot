@@ -129,11 +129,13 @@ int bathead_control_node::sign(double x)
 void bathead_control_node::rangeLeftSubscriberCallback(const std_msgs::Float64::ConstPtr& msg)
 {
 	range_left = (msg->data) / range_max;
+	if (range_left > range_max) range_left = range_max;
 }
 
 void bathead_control_node::rangeRightSubscriberCallback(const std_msgs::Float64::ConstPtr& msg)
 {
 	range_right = (msg->data) / range_max;
+	if (range_right > range_max) range_right = range_max;
 }
 
 //void bathead_control_node::poseSubscriberCallback(const nav_msgs::Odometry::ConstPtr& msg)
@@ -340,6 +342,8 @@ void bathead_control_node::run()
 	vel.angular.z *= -1.0;
 
 /// Publish twist command to pioneer robot
+	if(vel.linear.x > max_lin_vel) vel.linear.x = max_lin_vel;
+	if(vel.angular.z > max_ang_vel) vel.angular.z = max_ang_vel;
 	vel.linear.y = 0.0;
 	vel.linear.z = 0.0;
 	vel.angular.x = 0.0;

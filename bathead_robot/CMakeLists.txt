@@ -65,6 +65,14 @@ add_dependencies(bathead_control_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 target_link_libraries(bathead_control_node
   ${catkin_LIBRARIES}
 )
+add_executable(bathead_control_node_sim
+  include/bathead_robot/bathead_control_node.h
+  src/bathead_control_node_sim.cpp
+)
+add_dependencies(bathead_control_node_sim ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(bathead_control_node_sim
+  ${catkin_LIBRARIES}
+)
 # add_service_files(
 #   FILES
 # )

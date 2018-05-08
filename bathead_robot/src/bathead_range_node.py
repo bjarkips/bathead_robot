@@ -143,13 +143,10 @@ def batheadRange():
 		time.sleep(.0001) # .1 ms
 		gpio.output(chirp_trigger_pin, gpio.LOW)
 		
-		# Wait 20ms for processor to catch up
-		time.sleep(0.020)
-		
 		# Trigger snapshot
-		subprocess.call('trig -s tcp://localhost:7777 --pre=0 --post=50 snap', shell=True)
+		subprocess.call('trig -s tcp://localhost:7777 --pre=75 --post=25 snap', shell=True)
 	
-		# Wait for snapshot to finish writing
+		# Wait for snapshot to finish writing: repeatedly check snapchat ztatus for 'FIN' string
 		ztatus = subprocess.check_output('snapchat z', shell=True)
 		while (not ztatus.find('FIN')):
 			time.sleep(.001) # Wait 1 ms and try again
