@@ -138,13 +138,14 @@ def batheadRange():
 	rate = rospy.Rate(3) # Hz
 	
 	while not rospy.is_shutdown():
+		
 		# Trigger chirp
 		gpio.output(chirp_trigger_pin, gpio.HIGH)
 		time.sleep(.0001) # .1 ms
 		gpio.output(chirp_trigger_pin, gpio.LOW)
 		
 		# Trigger snapshot
-		subprocess.call('trig -s tcp://localhost:7777 --pre=75 --post=25 snap', shell=True)
+		subprocess.call('trig -s tcp://localhost:7777 --pre=100 --post=0 snap', shell=True)
 	
 		# Wait for snapshot to finish writing: repeatedly check snapchat ztatus for 'FIN' string
 		ztatus = subprocess.check_output('snapchat z', shell=True)

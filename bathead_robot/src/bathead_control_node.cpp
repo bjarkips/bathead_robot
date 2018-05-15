@@ -48,7 +48,7 @@ private:
 
 	// Attributes
     double range_left, range_right, range_max = 1.0,
-    	integral_left = 0.0, integral_right = 0.0, integral_weight = .2, // TODO check
+    	integral_left = 0.0, integral_right = 0.0, integral_weight = 2.0, // TODO check
     	max_ang_vel = .5, max_lin_vel = .2;
 	//nav_msgs::Odometry odom;
 	//vec goal = {7.64, -9.07}; // Goal in next room
@@ -168,12 +168,12 @@ void bathead_control_node::run()
 
 /// Integrate difference between max and current values to avoid walls and especially corners
 
-	//if (range_left == 1.0) integral_left -= 10 * integral_weight;
-	integral_left += (.8 - range_left) * integral_weight;
+	if (range_left == 1.0) integral_left -= .05 * integral_weight; // TODO check
+	integral_left += (1.0 - range_left) * integral_weight;
 	if (integral_left < 0.0) integral_left = 0.0;
 
-	//if (range_right == 1.0) integral_right -= 10 * integral_weight;
-	integral_right += (.8 - range_right) * integral_weight;
+	if (range_right == 1.0) integral_right -= .05 * integral_weight; // TODO check
+	integral_right += (1.0 - range_right) * integral_weight;
 	if (integral_right < 0.0) integral_right = 0.0;
 
 	// Clamp integrals
@@ -197,145 +197,173 @@ void bathead_control_node::run()
 
 	double L = range_left, R = range_right, G = -0.1, Tw = .85;
 
-/// Enter three-state machine
-	switch ( control_state ) {
-		case Control::seek_goal: 
-			ROS_INFO("Seeking goal. Int_L = %f Int_R = %f", integral_left, integral_right);
-			if ( .95 <= L && .95 <= R ) { 
-				// Case #1: No obstacle, turn towards goal at maximum forward speed
-				//vel.angular.z = max_ang_vel * -angle_diff_norm * (1.0 - integral_avg); // TODO check
-				vel.angular.z = 0.0;
-				vel.linear.x = max_lin_vel;
+// Prepare sensor state variable
+	int sensor_state = -1;
+	if ( L == 1.0 && R == 1.0 ) {
+		// Case #1: No obstacle
+		sensor_state = 1;
+	}
+	else if ( (L < 1.0) && (R == 1.0) && (G < 0.0) ) {
+		// Case #2: Obstacle and goal on left
+		sensor_state = 2;
+	}
+	else if ( (L < 1.0) && (G > 0.0) ) {
+		// Case #3: Obstacle on left side, goal on right
+		sensor_state = 3;
+	}
+	else if ( (L == 1.0) && (R < 1.0) && (G > 0.0) ) {
+		// Case #4: Obstacle and goal on right
+		sensor_state = 4;
+	}
+	else if ( (R < 1.0) && (G < 0.0)) {
+		// Case #5: Obstacle  on right side, goal on left
+		sensor_state = 5;
+	}
+
+/// Enter state machine
+	bool hit = 0;
+	while ( !hit ) {
+		switch ( control_state ) {
+			case Control::seek_goal: 
+				//ROS_DEBUG("[bathead_control_node] Seeking goal.");
+				switch ( sensor_state ) {
+					case -1:
+						hit = 1;
+						ROS_ERROR("[bathead_control_node] Unexpected sensor state.");
+						vel.angular.z = 0.0;
+						vel.linear.x = 0.0;
+						break;
+					case 1:
+						// No obstacle, drive straight ("turn towards goal")
+						hit = 1;
+						vel.angular.z = 0.0;
+						vel.linear.x = max_lin_vel;
+						break;
+					case 2:
+						control_state = Control::follow_left;
+						break;
+					case 3:
+						control_state = Control::follow_right;
+						break;
+					case 4:
+						control_state = Control::follow_right;
+						break;
+					case 5:
+						control_state = Control::follow_left;
+						break;
+				}
+				if (!hit && control_state == Control::seek_goal) {
+					ROS_ERROR("[bathead_control_node] seek_goal: Unexpected control behaviour.");
+				}
+				
+			case Control::follow_left:
+				switch ( sensor_state ) {
+					case -1:
+						hit = 1;
+						ROS_ERROR("[bathead_control_node] Unexpected sensor state.");
+						vel.angular.z = 0.0;
+						vel.linear.x = 0.0;
+						break;
+					case 1:
+						//if (G < 0.0) { // Goal on left, turn left
+						//	hit = 1;
+						//	vel.angular.z = -.9 * max_ang_vel * (1.1 - integral_avg);
+						//	vel.linear.x = max_lin_vel;
+						//}
+						//else {
+							control_state = Control::seek_goal;
+						//}
+						break;
+					case 2:
+						// Obstacle and goal on left, follow left wall
+						hit = 1;
+						if (Tw <= L) {
+							// Wall visible at a safe distance, keep driving straight	
+							vel.angular.z = 0.0;
+							vel.linear.x = max_lin_vel;
+						}
+						else {
+							// Wall too close, turn right
+							vel.angular.z = max_ang_vel * integral_avg;
+							vel.linear.x = max_lin_vel;
+						}
+						break;
+					case 3:
+						// Obstacle on left and goal on right, turn right
+						hit = 1;
+						vel.angular.z = max_ang_vel * integral_avg;
+						vel.linear.x = max_lin_vel;
+						break;
+					case 4:
+						control_state = Control::follow_right;
+						break;
+					case 5:
+						control_state = Control::follow_right;
+						break;
+				}
+				if (!hit && control_state == Control::follow_left) {
+					ROS_ERROR("[bathead_control_node] follow_left: Unexpected control behaviour");
+				}
 				break;
-			}
-			if ( L < .95 && G < 0.0 ) { 
-				// Case #2: Obstacle and goal on left side, follow_left
-				control_state = Control::follow_left;
-			}
-			if ( .95 <= L && R < .95 && G < 0.0 ) {
-				// Case #3: Obstacle on right and goal on left, follow_right
-				control_state = Control::follow_right;
-			}
-			if ( R < .95 && 0.0 <= G ) {
-				// Case #4: Obstacle and goal on right side, follow_right
-				control_state = Control::follow_right;
-			}
-			if ( L < .95 && .95 <= R && 0.0 <= G ) {
-				// Case #5: Obstacle on left and goal on right, follow_left
-				control_state = Control::follow_left;
-			}
-			if (control_state == Control::seek_goal ) {
-				ROS_ERROR("UNKNOWN CASE FOR SEEK_GOAL");
+			case Control::follow_right:
+				switch ( sensor_state ) {
+					case -1:
+						hit = 1;
+						ROS_ERROR("[bathead_control_node] Unexpected sensor state.");
+						vel.angular.z = 0.0;
+						vel.linear.x = 0.0;
+						break;
+					case 1:
+						//if (G > 0.0) { // Goal on right, turn right
+						//	hit = 1;
+						//	vel.angular.z = .9 * max_ang_vel * (1.1 - integral_avg);
+						//	vel.linear.x = max_lin_vel;
+						//}
+						//else {
+							control_state = Control::seek_goal;
+						//}
+						break;
+					case 2:
+						control_state = Control::follow_left;
+						break;
+					case 3:
+						control_state = Control::follow_left;
+						break;
+					case 4:
+						// Obstacle and goal on right, follow right wall
+						hit = 1;
+						if (Tw <= R) {
+							// Wall visible at a safe distance, keep driving straight	
+							vel.angular.z = 0.0;
+							vel.linear.x = max_lin_vel;
+						}
+						else {
+							// Wall too close, turn left
+							vel.angular.z = -max_ang_vel * integral_avg;
+							vel.linear.x = max_lin_vel;
+						}
+						break;
+					case 5:
+						// Obstacle on right and goal on left, turn left
+						hit = 1;
+						vel.angular.z = -max_ang_vel * integral_avg;
+						vel.linear.x = max_lin_vel;
+						break;
+				}
+				if (!hit && control_state == Control::follow_right) {			
+					ROS_ERROR("[bathead_control_node] follow_right: Unexpected control behaviour.");
+				}
 				break;
-			}
-	
-		case Control::follow_left:
-			ROS_INFO("Following left. Int_L = %f Int_R = %f", integral_left, integral_right);
-			if ( (Tw <= L && L < .95) && .95 <= R && G < 0.0 ) {
-				// Case #1: Wall visible on left side, goal on left side, drive straight
-				vel.angular.z = 0.0;
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			if ( L < .95 && R < .95 ) {
-				// Case #2: Obstacle in front, turn right
-				vel.angular.z = max_ang_vel * integral_avg;
-				vel.linear.x = max_lin_vel; // TODO check
-				break;
-			}
-			if ( L < Tw && .95 <= R && G < 0.0 ) {
-				// Case #3: Wall too close on left side, turn right
-				vel.angular.z = max_ang_vel * (1.0 - range_left);
-				vel.linear.x = max_lin_vel; // TODO check
-				break;
-			}
-			if ( .95 <= L && G < 0.0 ) {
-				// Case #4: No wall on left side, turn left
-				// TODO check that this properly avoids obstacles on the right
-				vel.angular.z = -.9*max_ang_vel * (1.1 - std::sqrt(std::sqrt(integral_avg)));
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			if ( L < .95 && .95 <= R && 0.0 <= G ) {
-				// Case #5: Goal on right and wall on left, turn right
-				vel.angular.z = max_ang_vel * (1.0 - range_left);
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			if ( .95 <= L && R < .95 && 0.0 <= G ) {
-				// Case #6: No wall on left side, goal and obstacle on right, follow_right
-				control_state = Control::follow_right;
-				vel.angular.z = 0.0;
-				vel.linear.x = 0.0;
-				break;
-			}
-			if ( .95 <= L && .95 <= R && 0.0 <= G ) {
-				// Case #7: No obstacle and goal on right, seek_goal
-				control_state = Control::seek_goal;
-				vel.angular.z = 0.0;
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			ROS_ERROR("UNKNOWN CASE FOR FOLLOW_LEFT");
-			break;
-	
-		case Control::follow_right:
-			ROS_INFO("Following right. Int_L = %f Int_R = %f", integral_left, integral_right);
-			if ( .95 <= L && (Tw <= R && R < .95) && 0.0 <= G ) {
-				// Case #1: Wall visible on right side, goal on right side, drive straight
-				vel.angular.z = 0.0;
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			if ( L < .95 && R < .95) {
-				// Case #2: Obstacle in front, turn left
-				vel.angular.z = -max_ang_vel * integral_avg;
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			if ( .95 <= L && R < Tw && 0.0 <= G ) {
-				// Case #3: Wall too close on right side, turn left
-				vel.angular.z = -max_ang_vel * (1.0 - range_right);
-				vel.linear.x = max_lin_vel;				
-				break;
-			}
-			if ( .95 <= R && 0.0 <= G ) {
-				// Case #4: No wall on right side, turn right
-				vel.angular.z = .9*max_ang_vel * (1.1 - std::sqrt(std::sqrt(integral_avg)));
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			if ( .95 <= L && R < .95 && G < 0.0 ) {
-				// Case #5: Goal on left and wall on right, turn left
-				vel.angular.z = -max_ang_vel * (1.0 - range_right);
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			if ( L < .95 && .95 <= R && G < 0.0 ) {
-				// Case #6: No wall on right side, goal and obstacle on left, follow_left
-				control_state = Control::follow_left;
-				vel.angular.z = 0.0;
-				vel.linear.x = 0.0;
-				break;
-			}
-			if ( .95 <= L && .95 <= R && G < 0.0 ) {
-				// Case #7: No obstacle and goal on left, seek_goal
-				control_state = Control::seek_goal;
-				vel.angular.z = 0.0;
-				vel.linear.x = max_lin_vel;
-				break;
-			}
-			ROS_ERROR("UNKNOWN CASE FOR FOLLOW_RIGHT");
-			break;
 		
-		default:
-			ROS_ERROR("INVALID CONTROL STATE");
-			break;
+			default:
+				ROS_ERROR("[bathead_control_node] Unexpected control state.");
+				break;
 	
-	} // switch (control_state)
+		} // switch (control_state)
+	} // while (!hit)
 	
 	// Calculate linear velocity
-	double lin_vel = max_lin_vel * (1.0 - 1.5 * (1.0 - range_avg));
+	double lin_vel = vel.linear.x * (1.0 - 1.5 * (1.0 - range_avg));
 	vel.linear.x = lin_vel;
 
 	// Correct angle
@@ -350,8 +378,8 @@ void bathead_control_node::run()
 	vel.angular.y = 0.0;
 	cmd_vel_publisher.publish(vel);
 
-	ROS_INFO("%d %f %f %f %f",
-				control_state, L, R,
+	ROS_INFO("%d %f %f %f %f %f",
+				control_state, L, R, integral_avg,
 				vel.angular.z, vel.linear.x);
 	
 	} // else
@@ -370,7 +398,7 @@ int main(int argc, char** argv)
 	bathead_control_node bcn(nh);
 	ros::Rate rate(3);
 	//ROS_INFO("bathead_robot_goal_x: %f bathead_robot_goal_y: %f bathead_robot_range: %f", bcn.goalX(), bcn.goalY(), bcn.range());
-	ROS_INFO("bathead_robot_ctrl bathead_robot_range_L bathead_robot_range_R bathead_robot_vel_ang_z bathead_robot_vel_lin_x");
+	ROS_INFO("control_state L R integral_avg vel.angular.z vel.linear.x");
 	while(ros::ok())
 	{
 		bcn.run();
