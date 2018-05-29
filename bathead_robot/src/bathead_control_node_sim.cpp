@@ -130,13 +130,13 @@ int bathead_control_node::sign(double x)
 void bathead_control_node::rangeLeftSubscriberCallback(const std_msgs::Float64::ConstPtr& msg)
 {
 	range_left = (msg->data) / range_max;
-	if ( (double) rand() / RAND_MAX > (1.0 - prob_bad_reading) ) range_left = 1.011 - range_left;
+	//if ( (double) rand() / RAND_MAX > (1.0 - prob_bad_reading) ) range_left = 1.011 - range_left;
 }
 
 void bathead_control_node::rangeRightSubscriberCallback(const std_msgs::Float64::ConstPtr& msg)
 {
 	range_right = (msg->data) / range_max;
-	if ( (double) rand() / RAND_MAX > (1.0 - prob_bad_reading) ) range_right = 1.011 - range_right;
+	//if ( (double) rand() / RAND_MAX > (1.0 - prob_bad_reading) ) range_right = 1.011 - range_right;
 }
 
 void bathead_control_node::poseSubscriberCallback(const nav_msgs::Odometry::ConstPtr& msg)
@@ -169,12 +169,14 @@ void bathead_control_node::run()
 
 /// Integrate difference between max and current values to avoid walls and especially corners
 
-	//if (range_left == 1.0) integral_left -= 10 * integral_weight;
-	integral_left += (.8 - range_left) * integral_weight;
+	double integral_reduction_rate = .2;
+
+	if (range_left == 1.0) integral_left -= integral_reduction_rate;
+	integral_left += (1.0 - range_left) * integral_weight;
 	if (integral_left < 0.0) integral_left = 0.0;
 
-	//if (range_right == 1.0) integral_right -= 10 * integral_weight;
-	integral_right += (.8 - range_right) * integral_weight;
+	if (range_right == 1.0) integral_right -= integral_reduction_rate;
+	integral_right += (1.0 - range_right) * integral_weight;
 	if (integral_right < 0.0) integral_right = 0.0;
 
 	// Clamp integrals
@@ -361,7 +363,8 @@ void bathead_control_node::run()
 	
 	
 	// Calculate linear velocity
-	double lin_vel = max_lin_vel * (1.0 - 1.5 * (1.0 - range_avg));
+	//double lin_vel = max_lin_vel * (1.0 - 1.5 * (1.0 - range_avg));
+	double lin_vel = vel.linear.x * (1.1 - integral_avg) / 1.1;
 	vel.linear.x = lin_vel;
 
 	// Correct angle
