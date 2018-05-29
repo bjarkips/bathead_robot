@@ -190,7 +190,8 @@ def batheadRange():
 		pub_right.publish( dist_right / dist_max )
 		
 		#print '[bathead_range] Publishing left:', dist_left, '\tright', dist_right
-		print '[bathead_range] Difference:', dist_left - dist_right
+		rospy.loginfo('%f %f', dist_left / dist_max, dist_right / dist_max)
+		#print '[bathead_range] Difference:', dist_left - dist_right
 		
 		rate.sleep()
 

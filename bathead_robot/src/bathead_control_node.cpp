@@ -168,11 +168,13 @@ void bathead_control_node::run()
 
 /// Integrate difference between max and current values to avoid walls and especially corners
 
-	if (range_left == 1.0) integral_left -= .05 * integral_weight; // TODO check
+	double integral_reduction_rate = .2;
+
+	if (range_left == 1.0) integral_left -= integral_reduction_rate;
 	integral_left += (1.0 - range_left) * integral_weight;
 	if (integral_left < 0.0) integral_left = 0.0;
 
-	if (range_right == 1.0) integral_right -= .05 * integral_weight; // TODO check
+	if (range_right == 1.0) integral_right -= integral_reduction_rate;
 	integral_right += (1.0 - range_right) * integral_weight;
 	if (integral_right < 0.0) integral_right = 0.0;
 
@@ -363,7 +365,8 @@ void bathead_control_node::run()
 	} // while (!hit)
 	
 	// Calculate linear velocity
-	double lin_vel = vel.linear.x * (1.0 - 1.5 * (1.0 - range_avg));
+	//double lin_vel = vel.linear.x * (1.0 - 1.5 * (1.0 - range_avg));
+	double lin_vel = vel.linear.x * (1.1 - integral_avg) / 1.1;
 	vel.linear.x = lin_vel;
 
 	// Correct angle
