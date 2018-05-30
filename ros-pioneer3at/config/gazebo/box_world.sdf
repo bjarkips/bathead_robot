@@ -3876,7 +3876,7 @@
     </model>
     
     <model name='Pioneer3AT'>
-      <pose>3.5 4.5 0.18 0 0 0</pose>
+      <pose>0 4.5 0.18 0 0 -1.57</pose>
       <static>0</static>
       <link name='chassis'>
         <inertial>

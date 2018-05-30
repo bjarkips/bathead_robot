@@ -48,8 +48,8 @@ private:
 
 	// Attributes
     double range_left, range_right, range_max = 1.5,
-    	integral_left = 0.0, integral_right = 0.0, integral_weight = .2, // TODO check
-    	max_ang_vel = .5, max_lin_vel = .2,
+    	integral_left = 0.0, integral_right = 0.0, integral_weight = 2.0*3.0/20.0, // TODO check
+    	max_ang_vel = 1.5, max_lin_vel = 0.6,
     	prob_bad_reading = .2;
 	nav_msgs::Odometry odom;
 	//vec goal = {7.64, -9.07}; // Goal in next room
@@ -65,9 +65,10 @@ private:
 	//vec goal = {0.0, 9.0}; // Goal in kitchen
 	// -17, -16: Outside, bottom right
 	// Goals in box_world
-	//vec goal = {3.5, 4.5}; // Goal in top right
+	vec goal = {3.5, 4.5}; // Goal in top right
 	//vec goal = {-7, 4.5}; // Goal in top left
-	vec goal = {-7.5, .5}; // Goal in left corner
+	//vec goal = {0,4.5}; // Goal in top of middle corridor
+	//vec goal = {-7.5, .5}; // Goal in left corner
 	std::clock_t t_obstacle = std::clock();
 	//int chirp_trigger_pin = 7;
 	
@@ -169,7 +170,7 @@ void bathead_control_node::run()
 
 /// Integrate difference between max and current values to avoid walls and especially corners
 
-	double integral_reduction_rate = .2;
+	double integral_reduction_rate = .025*3.0/20.0;
 
 	if (range_left == 1.0) integral_left -= integral_reduction_rate;
 	integral_left += (1.0 - range_left) * integral_weight;
@@ -198,9 +199,9 @@ void bathead_control_node::run()
 	double angle_diff = angleDiff(a_robot, a_robot_goal);
 	double angle_diff_norm = angle_diff / (M_PI / 2);
 
-	angle_diff_norm = -.1;
+	//angle_diff_norm = -.1;
 
-	double L = range_left, R = range_right, G = -angle_diff_norm, Tw = .85;
+	double L = range_left, R = range_right, G = -angle_diff_norm, Tw = .95;
 
 	// Prepare sensor state variable
 	int sensor_state = -1;
@@ -221,7 +222,7 @@ void bathead_control_node::run()
 		sensor_state = 4;
 	}
 	else if ( (R < 1.0) && (G < 0.0)) {
-		// Case #5: Obstacle  on right side, goal on left
+		// Case #5: Obstacle on right side, goal on left
 		sensor_state = 5;
 	}
 
@@ -237,22 +238,22 @@ void bathead_control_node::run()
 						ROS_ERROR("[bathead_control_node] Unexpected sensor state.");
 						break;
 					case 1:
-						// No obstacle, drive straight ("turn towards goal")
+						// No obstacle, turn towards goal
 						hit = 1;
-						vel.angular.z = 0.0;
+						vel.angular.z = max_ang_vel * -angle_diff_norm * (1.0 - std::max(integral_left, integral_right));//integral_avg);
 						vel.linear.x = max_lin_vel;
 						break;
 					case 2:
 						control_state = Control::follow_left;
 						break;
 					case 3:
-						control_state = Control::follow_right;
+						control_state = Control::follow_left;
 						break;
 					case 4:
 						control_state = Control::follow_right;
 						break;
 					case 5:
-						control_state = Control::follow_left;
+						control_state = Control::follow_right;
 						break;
 				}
 				if (!hit && control_state == Control::seek_goal) {
@@ -266,14 +267,14 @@ void bathead_control_node::run()
 						ROS_ERROR("[bathead_control_node] Unexpected sensor state.");
 						break;
 					case 1:
-						if (G < 0.0) { // Goal on left, turn left
-							hit = 1;
-							vel.angular.z = -.9 * max_ang_vel * (1.1 - integral_avg);
-							vel.linear.x = max_lin_vel;
-						}
-						else {
+//						if (G < 0.0) { // Goal on left, turn left
+//							hit = 1;
+//							vel.angular.z = -.9 * max_ang_vel * (1.1 - integral_avg);
+//							vel.linear.x = max_lin_vel;
+//						}
+//						else {
 							control_state = Control::seek_goal;
-						}
+//						}
 						break;
 					case 2:
 						// Obstacle and goal on left, follow left wall
@@ -299,7 +300,11 @@ void bathead_control_node::run()
 						control_state = Control::follow_right;
 						break;
 					case 5:
-						control_state = Control::follow_right;
+						// Obstacle on right, turn right
+						hit = 1;
+						vel.angular.z = max_ang_vel * integral_avg;
+						vel.linear.x = max_lin_vel;
+						//control_state = Control::follow_right;
 						break;
 				}
 				if (!hit && control_state == Control::follow_left) {
@@ -313,20 +318,24 @@ void bathead_control_node::run()
 						ROS_ERROR("[bathead_control_node] Unexpected sensor state.");
 						break;
 					case 1:
-						if (G > 0.0) { // Goal on right, turn right
-							hit = 1;
-							vel.angular.z = .9 * max_ang_vel * (1.1 - integral_avg);
-							vel.linear.x = max_lin_vel;
-						}
-						else {
+//						if (G > 0.0) { // Goal on right, turn right
+//							hit = 1;
+//							vel.angular.z = .9 * max_ang_vel * (1.1 - integral_avg);
+//							vel.linear.x = max_lin_vel;
+//						}
+//						else {
 							control_state = Control::seek_goal;
-						}
+//						}
 						break;
 					case 2:
 						control_state = Control::follow_left;
 						break;
 					case 3:
-						control_state = Control::follow_left;
+						// Obstacle on left, turn left
+						hit = 1;
+						vel.angular.z = -max_ang_vel * integral_avg;
+						vel.linear.x = max_lin_vel;
+						//control_state = Control::follow_left;
 						break;
 					case 4:
 						// Obstacle and goal on right, follow right wall
@@ -377,11 +386,10 @@ void bathead_control_node::run()
 	vel.angular.y = 0.0;
 	cmd_vel_publisher.publish(vel);
 
-	ROS_INFO("%d %f %f %f %f %f %f %f %f %f",
-				control_state, L, R, G,
-				odom.pose.pose.position.x, odom.pose.pose.position.y,
-				a_robot, a_robot_goal,
-				vel.angular.z, vel.linear.x);
+	ROS_INFO("%d %d %f %f %f %f %f %f %f %f %f",
+				control_state, sensor_state, L, R, G, integral_avg,
+				odom.pose.pose.position.x, odom.pose.pose.position.y, yaw,
+				vel.angular.z, vel.linear.x); 
 	
 	} // else
 }
@@ -397,9 +405,11 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "bathead_control_node");
 	ros::NodeHandle nh;
 	bathead_control_node bcn(nh);
-	ros::Rate rate(3);
-	ROS_INFO("bathead_robot_goal_x: %f bathead_robot_goal_y: %f bathead_robot_range: %f", bcn.goalX(), bcn.goalY(), bcn.range());
-	ROS_INFO("bathead_robot_ctrl bathead_robot_range_L bathead_robot_range_R bathead_robot_angle_G bathead_robot_pos_x bathead_robot_pos_y bathead_robot_yaw bathead_robot_ang_togoal bathead_robot_vel_ang_z bathead_robot_vel_lin_x");
+	ros::Rate rate(20);
+	ROS_INFO("goal: (%f, %f)", bcn.goalX(), bcn.goalY());
+	//ROS_INFO("bathead_robot_goal_x: %f bathead_robot_goal_y: %f bathead_robot_range: %f", bcn.goalX(), bcn.goalY(), bcn.range());
+	//ROS_INFO("bathead_robot_ctrl bathead_robot_range_L bathead_robot_range_R bathead_robot_angle_G bathead_robot_pos_x bathead_robot_pos_y bathead_robot_yaw bathead_robot_ang_togoal bathead_robot_vel_ang_z bathead_robot_vel_lin_x");
+	ROS_INFO("control_state L R G integral_avg pos_X pos_Y yaw vel.angular.z vel.linear.x");
 	while(ros::ok())
 	{
 		bcn.run();
